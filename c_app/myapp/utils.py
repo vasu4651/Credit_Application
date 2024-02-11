@@ -12,7 +12,18 @@ def get_new_customer_id():
     return customer_id
 
 
-def calculate_approved_limit(monthly_salary: int):
+def get_new_loan_id():
+    from .models import Loan
+    last_row = Loan.objects.order_by('-loan_id').first()
+    if last_row:
+        loan_id = last_row.loan_id + 1
+    else:
+        loan_id = 1
+
+    return loan_id
+
+
+def calculate_approved_limit(monthly_salary: int) -> int:
     limit = 36*monthly_salary
     rounded_limit = round(limit, -5)
     return rounded_limit
@@ -86,3 +97,19 @@ def load_excel_to_postgresql_util_loan():
 def load_excel_to_postgresql():
     load_excel_to_postgresql_util_customer()
     load_excel_to_postgresql_util_loan()
+
+
+def check_eligibility(customer_id: int, loan_amount: int, interest_rate: float, tenure: int) -> bool:
+    # temp logic will implement later
+    if tenure % 2 == 0:
+        return True
+    return False
+
+
+def calculate_monthly_installment(loan_amount: float, interest_rate: float, tenure: int) -> float:
+    monthly_interest_rate = (interest_rate / 12.00) / 100.00
+    num_payments = tenure
+
+    monthly_installment = loan_amount * (monthly_interest_rate * (1 + monthly_interest_rate)**num_payments) / ((1 + monthly_interest_rate)**num_payments - 1)
+
+    return round(monthly_installment, 2)

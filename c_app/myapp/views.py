@@ -1,9 +1,10 @@
 import json
+from datetime import datetime, timedelta
 from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
 from .models import Customer, Loan
 from django.views.decorators.csrf import csrf_exempt
-from .utils import calculate_approved_limit, get_new_customer_id
+from .utils import calculate_approved_limit, get_new_customer_id, get_new_loan_id, check_eligibility, calculate_monthly_installment
 from django.http import Http404
 
 
@@ -19,8 +20,8 @@ def home(x):
 
 @csrf_exempt
 def register(request):
-    if request.method == 'GET':
-        return JsonResponse({'error': 'GET method is not supported for registration'}, status=405)
+    if request.method != 'POST':
+        return JsonResponse({'error': f'{request.method} method is not supported for loan creation, use POST instead'}, status=405)
 
     try:
         data = json.loads(request.body)
@@ -49,10 +50,62 @@ def register(request):
         }
         return JsonResponse(response, status=200)
     
-    except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': e}, status=400)
 
 
+@csrf_exempt
+def create_loan(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': f'{request.method} method is not supported for loan creation, use POST instead'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        customer_id = data['customer_id']
+        loan_amount = data['loan_amount']
+        interest_rate = data['interest_rate']
+        tenure = data['tenure']
+
+        # Check if customer exists
+        try:
+            customer_row = Customer.objects.get(customer_id=customer_id)
+        except Exception as e:
+            return JsonResponse({'error': f"Failed request. Customer with Customer ID: {customer_id} does not exists"}, status=200)
+
+        response = {
+            'loan_id': None,
+            'customer_id': customer_id,
+            'loan_approved': False,
+            'message': "Sorry, loan not approved.",
+            'monthly_installment': None
+        }
+
+        # Check if eligible for loan
+        if not check_eligibility(customer_id=customer_id, loan_amount=loan_amount, interest_rate=interest_rate, tenure=tenure):
+            return JsonResponse(response, status=200)
+        
+        response['loan_id'] = get_new_loan_id()
+        response['loan_approved'] = True
+        response['message'] = "Congrats, loan approved."
+        response['monthly_installment'] = calculate_monthly_installment(loan_amount=loan_amount, interest_rate=interest_rate, tenure=tenure)
+        
+        new_loan = Loan(
+            loan_id = response['loan_id'],
+            customer_id = customer_id,
+            loan_amount = loan_amount,
+            tenure = tenure,
+            interest_rate = interest_rate,
+            monthly_payment = response['monthly_installment'],
+            emis_paid_on_time = 0,
+            date_of_approval = datetime.today().date(),
+            end_date = datetime.today().date() + timedelta(days=30 * tenure)
+        )
+        new_loan.save()
+        print("Loan saved successfully")
+        return JsonResponse(response, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'error': e}, status=400)
 
 
 def view_loan_by_loan_id(request, loan_id):
@@ -70,7 +123,7 @@ def view_loan_by_loan_id(request, loan_id):
         except Exception as e:
             return JsonResponse({'Error': e}, status=404)
         
-        
+
         customer = {
             'id': customer_row.customer_id,
             'first_name': customer_row.first_name,
@@ -90,7 +143,7 @@ def view_loan_by_loan_id(request, loan_id):
 
         if not response:
             response = {
-                "response": f"Loan data does not exist for Loan ID: {loan_id}"
+                "Message": f"Loan data does not exist for Loan ID: {loan_id}"
             }
 
         return JsonResponse(response, status=200)
@@ -119,10 +172,12 @@ def view_loans_by_customer_id(request, customer_id):
 
         if len(response) == 0:
             response = {
-                "response": "No loans found for this customer"
+                "Message": "No loans found for this customer"
             }
                 
         return JsonResponse(response, status=200, safe=False)
     
     except Exception as e:
         return JsonResponse({'Error': e}, status=400)
+
+
