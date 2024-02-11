@@ -99,11 +99,67 @@ def load_excel_to_postgresql():
     load_excel_to_postgresql_util_loan()
 
 
-def check_eligibility(customer_id: int, loan_amount: int, interest_rate: float, tenure: int) -> bool:
-    # temp logic will implement later
-    if tenure % 2 == 0:
-        return True
-    return False
+def calculate_credit_score(customer_id: int) -> float:
+    if customer_id % 2 == 0:
+        return 90
+    return 40
+
+
+def get_sum_of_current_emis(customer_id: int) -> float:
+    from .models import Loan
+
+    loan_rows = Loan.objects.filter(customer_id=customer_id)
+    loan_list = list(loan_rows.values())
+    res = 0
+    for loan in loan_list:
+        res += loan.get('monthly_payment', 0)
+    return res
+
+
+def get_sum_of_current_loans(customer_id: int) -> float:
+    from .models import Loan
+
+    loan_rows = Loan.objects.filter(customer_id=customer_id)
+    loan_list = list(loan_rows.values())
+    res = 0
+    for loan in loan_list:
+        res += loan.get('loan_amount', 0)
+    return res
+
+
+def calculate_check_eligibility(customer_id: int, loan_amount: int, interest_rate: float, tenure: int) -> bool:
+    from .models import Customer
+
+    # If sum of all current EMIs > 50% of monthly salary ,don’t approve any loans
+    customer_row = Customer.objects.get(customer_id=customer_id)
+    monthly_salary = customer_row.monthly_salary
+    if (get_sum_of_current_emis(customer_id=customer_id) >= monthly_salary/2):
+        return False
+
+
+    # If current exisiting loan amount + asked loan amount > approved limit is_limit_available = false
+    sum_of_current_loans = get_sum_of_current_loans(customer_id=customer_id)
+    approved_limit = customer_row.approved_limit
+    if sum_of_current_loans + loan_amount >= approved_limit:
+        return False, None
+
+
+    # On the basis of credit score
+    credit_score = calculate_credit_score(customer_id=customer_id)
+    if credit_score >= 50:
+        return True, None
+    
+    elif credit_score >= 30:
+        if interest_rate >= 12:
+            return True, None
+        return False, 12
+    
+    elif credit_score >= 10:
+        if interest_rate >= 16:
+            return True, None
+        return False, 16
+    
+    return False, None
 
 
 def calculate_monthly_installment(loan_amount: float, interest_rate: float, tenure: int) -> float:

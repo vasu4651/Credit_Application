@@ -4,7 +4,8 @@ from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse
 from .models import Customer, Loan
 from django.views.decorators.csrf import csrf_exempt
-from .utils import calculate_approved_limit, get_new_customer_id, get_new_loan_id, check_eligibility, calculate_monthly_installment
+from .utils import calculate_approved_limit, get_new_loan_id, calculate_check_eligibility, calculate_monthly_installment
+from myapp.utils import get_new_customer_id, get_sum_of_current_loans
 from django.http import Http404
 
 
@@ -16,6 +17,33 @@ def home(x):
     }
     return JsonResponse(temp)
 
+
+def get_customer_details(request, customer_id):
+    if request.method != 'GET':
+        return JsonResponse({'error': f'{request.method} method is not supported for fetching customer details, use GET instead'}, status=405)
+    
+    try:
+        # Check if customer exists
+        try:
+            customer_row = Customer.objects.get(customer_id=customer_id)
+        except Exception as e:
+            return JsonResponse({'error': f"Failed request. Customer with Customer ID: {customer_id} does not exists"}, status=200)
+   
+
+        response = {
+            'customer_id': customer_row.customer_id,
+            'first_name': customer_row.first_name,
+            'last_name': customer_row.last_name,
+            'age': customer_row.age,
+            'phone_number': customer_row.phone_number,
+            'monthly_salary': customer_row.monthly_salary,
+            'approved_limit': customer_row.approved_limit,
+            'current_debt': get_sum_of_current_loans(customer_id=customer_id)
+        }
+        return JsonResponse(response, status=200, safe=False)
+    
+    except Exception as e:
+        return JsonResponse({'error': e}, status=400)
 
 
 @csrf_exempt
@@ -54,6 +82,47 @@ def register(request):
         return JsonResponse({'error': e}, status=400)
 
 
+def check_eligibility(request):
+    if request.method != 'GET':
+        return JsonResponse({'error': f'{request.method} method is not supported for checking loan eligibility, use GET instead'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        customer_id = data['customer_id']
+        loan_amount = data['loan_amount']
+        interest_rate = data['interest_rate']
+        tenure = data['tenure']
+
+        # Check if customer exists
+        try:
+            customer_row = Customer.objects.get(customer_id=customer_id)
+        except Exception as e:
+            return JsonResponse({'error': f"Failed request. Customer with Customer ID: {customer_id} does not exists"}, status=200)
+
+        response = {
+            'customer_id': customer_id,
+            'approval': False,
+            'interest_rate': interest_rate,
+            'corrected_interest_rate': None,
+            'tenure': tenure,
+            'monthly_installment': None
+        }
+
+        # Check if eligible for loan
+        is_eligible, corrected_interest_rate = calculate_check_eligibility(customer_id=customer_id, loan_amount=loan_amount, interest_rate=interest_rate, tenure=tenure)
+        if not is_eligible:
+            response['corrected_interest_rate'] = corrected_interest_rate
+            return JsonResponse(response, status=200, safe=False)
+        
+        response['approval'] = True
+        response['monthly_installment'] = calculate_monthly_installment(loan_amount=loan_amount, interest_rate=interest_rate, tenure=tenure)
+        
+        return JsonResponse(response, status=200, safe=False)
+    
+    except Exception as e:
+        return JsonResponse({'error': e}, status=400)
+
+
 @csrf_exempt
 def create_loan(request):
     if request.method != 'POST':
@@ -81,7 +150,8 @@ def create_loan(request):
         }
 
         # Check if eligible for loan
-        if not check_eligibility(customer_id=customer_id, loan_amount=loan_amount, interest_rate=interest_rate, tenure=tenure):
+        is_eligible, _ = calculate_check_eligibility(customer_id=customer_id, loan_amount=loan_amount, interest_rate=interest_rate, tenure=tenure)
+        if not is_eligible:
             return JsonResponse(response, status=200)
         
         response['loan_id'] = get_new_loan_id()
