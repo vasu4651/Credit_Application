@@ -134,7 +134,7 @@ def calculate_check_eligibility(customer_id: int, loan_amount: int, interest_rat
     customer_row = Customer.objects.get(customer_id=customer_id)
     monthly_salary = customer_row.monthly_salary
     if (get_sum_of_current_emis(customer_id=customer_id) >= monthly_salary/2):
-        return False
+        return False, None
 
 
     # If current exisiting loan amount + asked loan amount > approved limit is_limit_available = false
