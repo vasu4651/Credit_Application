@@ -1,5 +1,6 @@
 import pandas as pd
 from myapp.constants import CONFIG
+from decimal import Decimal
 
 def get_new_customer_id():
     from .models import Customer
@@ -100,9 +101,38 @@ def load_excel_to_postgresql():
 
 
 def calculate_credit_score(customer_id: int) -> float:
-    if customer_id % 2 == 0:
-        return 90
-    return 40
+    from myapp.models import Customer, Loan
+    customer_row = Customer.objects.get(customer_id=customer_id)
+    loan_rows = Loan.objects.filter(customer_id=customer_id)
+
+    # (available_limit/approved_limit) * 100
+    sum_of_current_loans = get_sum_of_current_loans(customer_id=customer_id)
+    approved_limit = customer_row.approved_limit
+    available_limit = approved_limit - sum_of_current_loans
+    score1 = float(available_limit/approved_limit) * 100
+
+
+    # sigma((emis_paid_on_time/tenure)*monthly_payment)/sigma(monthly_payment)   * 100
+    sum_numerator = 0
+    sum_denominator = 0
+    for loan_row in loan_rows:
+        sum_numerator += (loan_row.emis_paid_on_time/loan_row.tenure)*float(loan_row.monthly_payment)
+        sum_denominator += float(loan_row.monthly_payment)
+    if not sum_denominator:
+        score2 = 0
+    else:
+        score2 = (sum_numerator/sum_denominator) * 100
+
+
+    # sum_of_monthly_installments/monthly_salary * 100
+    sum_of_current_emis = get_sum_of_current_emis(customer_id=customer_id)
+    if customer_row.monthly_salary <= sum_of_current_emis:
+        score3 = 0
+    else:
+        score3 = float((customer_row.monthly_salary - sum_of_current_emis)/customer_row.monthly_salary) * 100
+
+    credit_score = 0.4*score1 + 0.2*score2 + 0.4*score3
+    return credit_score
 
 
 def get_sum_of_current_emis(customer_id: int) -> float:

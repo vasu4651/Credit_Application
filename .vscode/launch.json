@@ -8,10 +8,11 @@
             "name": "runserver",
             "type": "debugpy",
             "request": "launch",
-            // "program": "c_app/manage.py",
-            "program": "${file}",
+            "program": "c_app/manage.py",
             "console": "integratedTerminal",
-            "args": "runserver"
+            "args": [
+                "runserver"
+            ]
         }
     ]
 }
