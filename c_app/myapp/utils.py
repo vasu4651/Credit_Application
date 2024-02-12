@@ -177,7 +177,9 @@ def calculate_check_eligibility(customer_id: int, loan_amount: int, interest_rat
     # On the basis of credit score
     credit_score = calculate_credit_score(customer_id=customer_id)
     if credit_score >= 50:
-        return True, None
+        if interest_rate >= 8:
+            return True, None
+        return False, 8
     
     elif credit_score >= 30:
         if interest_rate >= 12:
