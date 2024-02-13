@@ -80,6 +80,8 @@ DATABASES = {
         'NAME': 'test1',  # this is the name of the database
         'USER': 'vasu',
         'PASSWORD': '12341234',
+        'HOST': 'localhost',  # or '127.0.0.1'
+        'PORT': '5432',
     }
 }
 
