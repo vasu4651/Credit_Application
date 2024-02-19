@@ -1,6 +1,36 @@
 All the functionality as mentioned in the assignment document has been implemented. The data from excel sheets are loaded to the database after the "post_migrate" signal is received which denotes the event of the completion of the migration from models to the Postgresql database.
 
 
+Run this command at the location where the docker-compose.yml file is present to run the application on localhost:8000/:
+    docker-compose up
+
+
+I have also pushed the image to Docker Hub. The application can be run locally just by saving the below as a docker-compose.yml file and running the command "docker-compose up" without the requirement of any code.
+"""
+    version: "3.8"
+
+    services:
+    postgres_db:
+        image: postgres:latest
+        environment:
+        - POSTGRES_DB=test11
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=1234
+        ports:
+        - "5432:5432"
+
+    web:
+        image: vasu4651/myapp:1
+        ports:
+        - "8000:8000"
+        command: ["sh", "./start.sh"]
+        depends_on:
+        - postgres_db
+"""
+
+
+
+
 Here is a breif info about each endpoint
 
     1) /register
