@@ -1,4 +1,7 @@
-All the functionality as mentioned in the assignment document has been implemented. Here is a breif info about each endpoint
+All the functionality as mentioned in the assignment document has been implemented. The data from excel sheets are loaded to the database after the "post_migrate" signal is received which denotes the event of the completion of the migration from models to the Postgresql database.
+
+
+Here is a breif info about each endpoint
 
     1) /register
         This function creates a new customer row in the database.
