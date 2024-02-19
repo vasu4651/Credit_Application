@@ -16,3 +16,4 @@ def on_post_migrate(sender, **kwargs):
     if sender.name == 'myapp':
         print("post_migrate signal received")
         load_excel_to_postgresql()
+        print("Application running on localhost:8000")
