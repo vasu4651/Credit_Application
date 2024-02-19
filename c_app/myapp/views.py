@@ -5,13 +5,14 @@ from django.http import JsonResponse
 from .models import Customer, Loan
 from django.views.decorators.csrf import csrf_exempt
 from .utils import calculate_approved_limit, get_new_loan_id, calculate_check_eligibility, calculate_monthly_installment
-from myapp.utils import get_new_customer_id, get_sum_of_current_loans, get_sum_of_current_emis, calculate_credit_score
+from myapp.utils import get_new_customer_id, get_sum_of_current_loans, get_sum_of_current_emis, calculate_credit_score, load_excel_to_postgresql
 from django.http import Http404
 
 
 
 @csrf_exempt
 def register(request):
+    load_excel_to_postgresql()
     if request.method != 'POST':
         return JsonResponse({'error': f'{request.method} method is not supported for loan creation, use POST instead'}, status=405)
 
@@ -48,6 +49,7 @@ def register(request):
 
 @csrf_exempt
 def create_loan(request):
+    load_excel_to_postgresql()
     if request.method != 'POST':
         return JsonResponse({'error': f'{request.method} method is not supported for loan creation, use POST instead'}, status=405)
     
@@ -102,6 +104,7 @@ def create_loan(request):
 
 
 def check_eligibility(request):
+    load_excel_to_postgresql()
     if request.method != 'GET':
         return JsonResponse({'error': f'{request.method} method is not supported for checking loan eligibility, use GET instead'}, status=405)
     
@@ -143,6 +146,7 @@ def check_eligibility(request):
 
 
 def view_loan_by_loan_id(request, loan_id):
+    load_excel_to_postgresql()
     if request.method != 'GET':
         return JsonResponse({'Error': f'{request.method} is not supported for this operation. Use GET instead.'})
     
@@ -187,6 +191,7 @@ def view_loan_by_loan_id(request, loan_id):
 
 
 def view_loans_by_customer_id(request, customer_id):
+    load_excel_to_postgresql()
     if request.method != 'GET':
         return JsonResponse({'Error': f'{request.method} is not supported for this operation. Use GET instead.'})
     
@@ -216,6 +221,7 @@ def view_loans_by_customer_id(request, customer_id):
 
 
 def get_customer_details(request, customer_id):
+    load_excel_to_postgresql()
     if request.method != 'GET':
         return JsonResponse({'error': f'{request.method} method is not supported for fetching customer details, use GET instead'}, status=405)
     
