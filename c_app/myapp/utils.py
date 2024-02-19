@@ -53,7 +53,7 @@ def load_excel_to_postgresql_util_customer():
             customer.save()
 
         count = Customer.objects.count()
-        print(f'Successfully loaded data into the Customer table, count: {count}')
+        print(f'Successfully loaded data into the Customer table, Customer data count: {count}')
 
     except Exception as e:
         print(f'Error loading data: {str(e)}')
@@ -62,7 +62,6 @@ def load_excel_to_postgresql_util_customer():
 def load_excel_to_postgresql_util_loan():
     from .models import Loan
     count = Loan.objects.count()
-    print(f"Loan Data Count: {count}")
     if count != 0:
         print(f"Data already present in Loan table in PostgreSQL, so not loading from xlsx file, count: {count}")
         return
@@ -89,7 +88,7 @@ def load_excel_to_postgresql_util_loan():
 
 
         count = Loan.objects.count()
-        print(f'Successfully loaded data into the Loan table, count: {count}')
+        print(f'Successfully loaded data into the Loan table, Loan data count: {count}')
 
     except Exception as e:
         print(f'Error loading data: {str(e)}')
