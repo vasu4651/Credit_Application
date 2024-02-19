@@ -7,8 +7,8 @@ Run this command at the location where the docker-compose.yml file is present to
 
 I have also pushed the image to Docker Hub. The application can be run locally just by saving the below as a docker-compose.yml file and running the command "docker-compose up" without the requirement of any code.
 """
-    version: "3.8"
 
+    version: "3.8"
     services:
     postgres_db:
         image: postgres:latest
@@ -26,6 +26,7 @@ I have also pushed the image to Docker Hub. The application can be run locally j
         command: ["sh", "./start.sh"]
         depends_on:
         - postgres_db
+
 """
 
 
