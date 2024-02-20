@@ -10,22 +10,22 @@ I have also pushed the image to Docker Hub. The application can be run locally j
 
     version: "3.8"
     services:
-    postgres_db:
-        image: postgres:latest
-        environment:
-        - POSTGRES_DB=test11
-        - POSTGRES_USER=postgres
-        - POSTGRES_PASSWORD=1234
-        ports:
-        - "5432:5432"
-
-    web:
-        image: vasu4651/myapp:1
-        ports:
-        - "8000:8000"
-        command: ["sh", "./start.sh"]
-        depends_on:
-        - postgres_db
+        postgres_db:
+            image: postgres:latest
+            environment:
+            - POSTGRES_DB=test11
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=1234
+            ports:
+            - "5432:5432"
+    
+        web:
+            image: vasu4651/myapp:1
+            ports:
+            - "8000:8000"
+            command: ["sh", "./start.sh"]
+            depends_on:
+            - postgres_db
 
 """
 
