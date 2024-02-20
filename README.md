@@ -8,8 +8,8 @@ Run this command at the location where the docker-compose.yml file is present to
 I have also pushed the image to Docker Hub. The application can be run locally just by saving the below as a docker-compose.yml file and running the command "docker-compose up" without the requirement of any code.
 """
 
-    version: "3.8"
-    services:
+version: "3.8"
+services:
     postgres_db:
         image: postgres:latest
         environment:
@@ -18,7 +18,6 @@ I have also pushed the image to Docker Hub. The application can be run locally j
         - POSTGRES_PASSWORD=1234
         ports:
         - "5432:5432"
-
     web:
         image: vasu4651/myapp:1
         ports:
