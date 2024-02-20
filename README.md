@@ -10,6 +10,7 @@ I have also pushed the image to Docker Hub. The application can be run locally j
 
 version: "3.8"
 services:
+
     postgres_db:
         image: postgres:latest
         environment:
@@ -18,6 +19,7 @@ services:
         - POSTGRES_PASSWORD=1234
         ports:
         - "5432:5432"
+        
     web:
         image: vasu4651/myapp:1
         ports:
